@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat por Salas</title>
+</head>
+<body>
+  <label>Nickname: </label>
+  <input type="text" id="username" placeholder="Seu nome">
+  <br>
+
+  <label>Escolha a sala: </label>
+  <select id="room-select">
+    <option value="sala1">Sala 1</option>
+    <option value="sala2">Sala 2</option>
+    <option value="sala3">Sala 3</option>
+    <option value="sala4">Sala 4</option>
+  </select>
+  <button onclick="entrarNaSala()">Entrar</button>
+
+  <hr>
+
+  <div id="chat" style="display:none;">
+    <ul id="messages"></ul>
+    <form id="form">
+      <textarea id="input" rows="4" cols="60" placeholder="Digite sua mensagem..."></textarea><br>
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let salaAtual = '';
+
+    function entrarNaSala() {
+      const nickname = document.getElementById('username').value;
+      salaAtual = document.getElementById('room-select').value;
+
+      if (!nickname || !salaAtual) {
+        alert('Digite seu nome e escolha uma sala!');
+        return;
+      }
+
+      socket.emit('entrarNaSala', salaAtual);
+      document.getElementById('chat').style.display = 'block';
+    }
+
+    document.getElementById('form').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const msg = document.getElementById('input').value;
+      const nome = document.getElementById('username').value;
+      const hora = new Date().toLocaleTimeString();
+
+      socket.emit('mensagemSala', {
+        sala: salaAtual,
+        user: nome,
+        message: msg,
+        time: hora
+      });
+
+      document.getElementById('input').value = '';
+    });
+
+    socket.on('mensagemSala', function(data) {
+      const li = document.createElement('li');
+      li.innerHTML = `<b>[${data.time}]</b> ${data.user}: ${data.message}`;
+      document.getElementById('messages').appendChild(li);
+    });
+  </script>
+</body>
+</html>
